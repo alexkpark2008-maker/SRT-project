@@ -1,0 +1,77 @@
+import random
+
+grid = [[0 for i in range(20)] for i in range(20)]
+
+#spawing location
+startRow = 1
+startColumn = random.randint(1, 20)
+
+
+#gem location
+gemRow = random.randint(10, 20)
+gemColumn = random.randint(1, 20)
+
+
+class environment:
+    def __init__(self, passable, travelCost):
+        self.passable = True
+        self.travelCost = 1
+
+class wall(environment):
+    def __init__(self, passable, travelCost):
+            self.passable = False
+            self.travelCost = float("inf")
+
+class river(environment):
+    def __init__(self, passable, travelCost):
+            self.passable = True
+            self.travelCost = 2
+
+
+def randomObstacles(obstacles):
+    virtualGrid = ""
+    RowState = 0
+    ColumnState = 0
+
+    
+    #make that many obstacles
+    for i in range(obstacles):
+        block = random.randint(0, 399)
+        row = block // 20
+        column = block % 20
+
+        #asign 3 different values for 3 different types of obstacles
+        obstacleType = random.randint(0, 2)
+        grid[row][column] = obstacleType
+
+    for row in grid:
+        RowState += 1
+        for column in row:
+            ColumnState += 1
+            ColumnState = ColumnState % 20
+            
+            if RowState == startRow and ColumnState == startColumn:
+                virtualGrid += " T "
+
+            elif RowState == gemRow and ColumnState == gemColumn:
+                virtualGrid += " G "
+            else:
+                virtualGrid += f" {column} "
+        virtualGrid += "\n"
+
+    return virtualGrid
+
+
+
+print(randomObstacles(150))
+print(startRow, startColumn)
+print(gemRow, gemColumn)
+
+
+
+
+            
+
+
+
+
