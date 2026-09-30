@@ -65,22 +65,6 @@ class Environment:
             self.grid[row][column] = RIVER
 
     def disturbance(self):
-        def moveGem():
-            possibleSpot = False
-            while not possibleSpot:
-                gemRow = random.randint(9, 19)
-                gemColumn = random.randint(0, 19)
-                if self.grid[gemRow][gemColumn] == 0:
-                    possibleSpot = True
-
-        runif = random.randint(0, 2)
-        disturbance = random.randint(0, 1)
-        if runif == 0:
-            if disturbance == 0:
-                moveGem()
-            else:
-                self.randomObstacles(30, 20)
-    def disturbance(self):
     
         runif = random.randint(0, 2)
     
