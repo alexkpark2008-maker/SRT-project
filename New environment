@@ -1,0 +1,113 @@
+import random
+
+WALL = 1
+RIVER = 2
+
+UP = 0
+DOWN = 1
+LEFT = 2
+RIGHT = 3
+
+class Environment:
+
+    def __init__(self):
+
+        self.grid = [[0 for i in range(20)] for i in range(20)]
+
+    
+        self.robotRow = 0
+        self.robotColumn = random.randint(0, 19)
+
+        self.gemRow = random.randint(9, 19)
+        self.gemColumn = random.randint(0, 19)
+
+      
+        self.randomObstacles(30, 20)
+
+
+    def reset(self):
+
+        
+        self.robotRow = 0
+
+        return self.getState()
+
+
+    def randomObstacles(self, numWalls, numRivers):
+
+        for i in range(numWalls):
+
+            row = random.randint(0, 19)
+            column = random.randint(0, 19)
+
+            while (row == self.robotRow and column == self.robotColumn) or \
+                  (row == self.gemRow and column == self.gemColumn) or \
+                  self.grid[row][column] != 0:
+
+                row = random.randint(0, 19)
+                column = random.randint(0, 19)
+
+            self.grid[row][column] = WALL
+
+
+        for i in range(numRivers):
+
+            row = random.randint(0, 19)
+            column = random.randint(0, 19)
+
+            while (row == self.robotRow and column == self.robotColumn) or \
+                  (row == self.gemRow and column == self.gemColumn) or \
+                  self.grid[row][column] != 0:
+
+                row = random.randint(0, 19)
+                column = random.randint(0, 19)
+
+            self.grid[row][column] = RIVER
+
+    def disturbance(self):
+        def moveGem():
+            possibleSpot = False
+            while not possibleSpot:
+                gemRow = random.randint(9, 19)
+                gemColumn = random.randint(0, 19)
+                if self.grid[gemRow][gemColumn] == 0:
+                    possibleSpot = True
+
+        runif = random.randint(0, 2)
+        disturbance = random.randint(0, 1)
+        if runif == 0:
+            if disturbance == 0:
+                moveGem()
+            else:
+                self.randomObstacles(30, 20)
+    def disturbance(self):
+    
+        runif = random.randint(0, 2)
+    
+        if runif != 0:
+            return
+    
+        disturbanceType = random.randint(0, 1)
+    
+        if disturbanceType == 0:
+            possibleSpots = []
+    
+            for row in range(9, 20):
+                for column in range(20):
+                    if self.grid[row][column] == 0:
+                        if not (row == self.robotRow and column == self.robotColumn):
+                            possibleSpots.append((row, column))
+    
+            if len(possibleSpots) > 0:
+                newGemRow, newGemColumn = random.choice(possibleSpots)
+                self.gemRow = newGemRow
+                self.gemColumn = newGemColumn
+    
+    def getState(self):
+    
+            return (
+                self.robotRow,
+                self.robotColumn,
+                self.gemRow,
+                self.gemColumn
+            )
