@@ -12,6 +12,7 @@ gemRow = random.randint(9, 19)
 gemColumn = random.randint(0, 19)
 
 numObjectivesMet = 0
+numMoves = 0
 
 
 
@@ -32,13 +33,29 @@ def randomObstacles(objects):
     print(gemRow, gemColumn)
     return None
 
+def disturbances():
+    def moveGem():
+        possibleSpot = False
+        global gemRow, gemColumn
+        while not possibleSpot:
+            gemRow = random.randint(9, 19)
+            gemColumn = random.randint(0, 19)
+            if grid[gemRow][gemColumn] == 0:
+                possibleSpot = True
+    runif = random.randint(0, 2)
+    disturbance = random.randint(0, 1)
+    if runif == 0:
+        if disturbance == 0:
+            moveGem()
+        else:
+            randomObstacles(200)
 
 def basicBot():
     moving = True
-    numMoves = 0
     objectiveMet = False
     while moving:
-        global startRow, startColumn, numObjectivesMet
+        disturbances()
+        global startRow, startColumn, numObjectivesMet, numMoves
         if startRow < 19 and grid[startRow + 1][startColumn] == 0:
             startRow += 1
             numMoves += 1
@@ -68,9 +85,8 @@ def basicBot():
             moving = False
             print(numMoves)
             print(objectiveMet)
-
     return None
-    
+
 
 #code for visual Grid
 def visualGrid():
@@ -93,7 +109,9 @@ def visualGrid():
         virtualGrid += "\n"
     print(virtualGrid)
 
-#run code 10 times to see if complete mission
+
+
+#run code 1000 times to see if 
 for i in range(1000):
     randomObstacles(150)
     basicBot()
@@ -107,8 +125,20 @@ for i in range(1000):
     for row in range(20):
         for column in range(20):
             grid[row][column] = 0
+    numMoves = 0
 
 print(numObjectivesMet)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
