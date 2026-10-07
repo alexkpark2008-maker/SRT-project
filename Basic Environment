@@ -11,27 +11,157 @@ startColumn = random.randint(0, 19)
 gemRow = random.randint(9, 19)
 gemColumn = random.randint(0, 19)
 
+
 numObjectivesMet = 0
 numMoves = 0
 
+def possiblePath():
+    global startRow, startColumn, gemRow, gemColumn
+
+    pathlist = []
+
+    row = startRow
+    column = startColumn
+    pathlist.append((row, column))
+
+    while row != gemRow or column != gemColumn:
+        possibleMoves = []
+        if row < gemRow:
+            possibleMoves.append((row + 1, column))
+        if row > gemRow:
+            possibleMoves.append((row - 1, column))
+        if column < gemColumn:
+            possibleMoves.append((row, column + 1))
+        if column > gemColumn:
+            possibleMoves.append((row, column - 1))
+        row, column = random.choice(possibleMoves)
+        pathlist.append((row, column))
 
 
-def randomObstacles(objects):
-    #make that many obstacles
-    for i in range(objects):
-        block = random.randint(0, 399)
-        row = block // 20
-        column = block % 20
+    return pathlist
 
-        #asign 3 different values for 3 different types of obstacles
-        obstacleType = random.randint(0, 2)
-        grid[row][column] = obstacleType
+
+def Obstacles(cliffs, rivers, trees):
+
+    def cliff():
+        startCliff = random.randint(0, 399)
+        row = startCliff // 20
+        column = startCliff % 20
+
+        cliffLength = random.randint(20, 30)
+        upDown = random.randint(0, 1)
+
+        while cliffLength > 0 and 0 <= row < 20 and 0 <= column < 20:
+            grid[row][column] = 1
+            if upDown == 0:
+                row += 1
+            else:
+                column += 1
+            cliffLength -= 1
+
+    def river():
+        attempts = 0
+
+        while attempts < 1000:
+            startRiver = random.randint(0, 399)
+            row = startRiver // 20
+            column = startRiver % 20
+
+            if grid[row][column] == 0:
+                break
+
+            attempts += 1
+
+        if attempts >= 1000:
+            return
+
+        riverLength = random.randint(10, 20)
+
+        for _ in range(riverLength):
+            if not (0 <= row < 20 and 0 <= column < 20):
+                break
+
+            if grid[row][column] == 1:
+                break
+
+            grid[row][column] = 2
+
+            riverDirection = random.randint(0, 4)
+
+            if riverDirection == 0:
+                row += 1
+            elif riverDirection == 1:
+                column += 1
+            elif riverDirection == 2:
+                column -= 1
+            elif riverDirection == 3:
+                row += 1
+                column += 1
+            else:
+                row += 1
+                column -= 1
+    
+    def tree():
+        startTree = random.randint(0, 399)
+        row = startTree // 20
+        column = startTree % 20
+
+        if grid[row][column] == 0:
+            if (
+                (row == 0 or grid[row - 1][column] != 3) and
+                (row == 19 or grid[row + 1][column] != 3) and
+                (column == 0 or grid[row][column - 1] != 3) and
+                (column == 19 or grid[row][column + 1] != 3)
+            ):
+                grid[row][column] = 3
+        else:
+            return
+
+    for _ in range(cliffs):
+        cliff()
+    for _ in range(rivers):
+        river()
+    for _ in range(trees):
+        tree()
+
+    pathList = possiblePath()
+    for i in pathList:
+        grid[i[0]][i[1]] = 0
+
     grid[startRow][startColumn] = 0
     grid[gemRow][gemColumn] = 0
 
-    print(startRow, startColumn)
-    print(gemRow, gemColumn)
+    print(f"Start Row: {startRow}, Start Column: {startColumn}")
+    print(f"Gem Row: {gemRow}, Gem Column: {gemColumn}")
     return None
+
+def gemIsInterceptable():
+    visited = set()
+    queue = [(startRow, startColumn)]
+
+    while queue:
+        row, col = queue.pop(0)
+
+        if (row, col) in visited:
+            continue
+
+        if row < 0 or row >= 20 or col < 0 or col >= 20:
+            continue
+
+        if grid[row][col] == 1:
+            continue
+
+        if row == gemRow and col == gemColumn:
+            return True
+
+        visited.add((row, col))
+
+        queue.append((row + 1, col))
+        queue.append((row - 1, col))
+        queue.append((row, col + 1))
+        queue.append((row, col - 1))
+
+    return False
 
 def disturbances():
     def moveGem():
@@ -48,13 +178,13 @@ def disturbances():
         if disturbance == 0:
             moveGem()
         else:
-            randomObstacles(200)
+            Obstacles(1, 1)
 
 def basicBot():
     moving = True
     objectiveMet = False
     while moving:
-        disturbances()
+        #disturbances()
         global startRow, startColumn, numObjectivesMet, numMoves
         if startRow < 19 and grid[startRow + 1][startColumn] == 0:
             startRow += 1
@@ -71,20 +201,19 @@ def basicBot():
             numMoves += 1
         else:
             moving = False
-            print(numMoves)
-            print(objectiveMet)
-        
+            print(f"Number of moves: {numMoves}")
+            print(f"Objective met: {objectiveMet}")
+
         if startRow == gemRow and startColumn == gemColumn:
             moving = False
-            print(numMoves)
-            print(objectiveMet)
+            print(f"Number of moves: {numMoves}")
             objectiveMet = True
             numObjectivesMet += 1
-            print(objectiveMet)
+            print(f"Objective met: {objectiveMet}")
         if numMoves > 99:
             moving = False
-            print(numMoves)
-            print(objectiveMet)
+            print(f"Number of moves: {numMoves}")
+            print(f"Objective met: {objectiveMet}")
     return None
 
 
@@ -110,13 +239,17 @@ def visualGrid():
     print(virtualGrid)
 
 
-
+possible = 0
 #run code 1000 times to see if 
 for i in range(1000):
-    randomObstacles(150)
+    Obstacles(2, 2, 150)
     basicBot()
-    print(startRow, startColumn)
+    if gemIsInterceptable():
+        possible += 1
+
+    print(f"Turtle Row: {startRow}, Turtle Column: {startColumn}")
     visualGrid()
+    
     startRow = 0
     startColumn = random.randint(0, 19)
 
@@ -127,24 +260,4 @@ for i in range(1000):
             grid[row][column] = 0
     numMoves = 0
 
-print(numObjectivesMet)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-
-
-
-
+print(f"Percent of environments where gem is interceptable: {possible/10}%")
