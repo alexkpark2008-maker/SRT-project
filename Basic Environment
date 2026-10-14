@@ -1,4 +1,6 @@
 import random
+import heapq
+
 
 grid = [[0 for i in range(20)] for i in range(20)]
 
@@ -48,7 +50,7 @@ def Obstacles(cliffs, rivers, trees):
         row = startCliff // 20
         column = startCliff % 20
 
-        cliffLength = random.randint(20, 30)
+        cliffLength = random.randint(10, 20)
         upDown = random.randint(0, 1)
 
         while cliffLength > 0 and 0 <= row < 20 and 0 <= column < 20:
@@ -180,6 +182,118 @@ def disturbances():
         else:
             Obstacles(1, 1)
 
+def frontierBot():
+
+    global startRow, startColumn, numObjectivesMet, numMoves
+ 
+
+    UNKNOWN = -1
+    DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+ 
+    knownGrid = [[UNKNOWN for _ in range(20)] for _ in range(20)]
+    gemPos = None
+ 
+    def identifyFrontier():
+        nonlocal gemPos
+        for r in range(startRow - 2, startRow + 3):
+            for c in range(startColumn - 2, startColumn + 3):
+                if 0 <= r < 20 and 0 <= c < 20:
+                    knownGrid[r][c] = grid[r][c]
+                    if (r, c) == (gemRow, gemColumn):
+                        gemPos = (r, c)
+ 
+    def stepCost(row, col):
+        if knownGrid[row][col] == 0:
+            return 1
+        if knownGrid[row][col] == 2:
+            return 2
+        return None
+ 
+    def isFrontier(row, col):
+        if stepCost(row, col) is None:
+            return False
+        for dr, dc in DIRECTIONS:
+            nr, nc = row + dr, col + dc
+            if 0 <= nr < 20 and 0 <= nc < 20 and knownGrid[nr][nc] == UNKNOWN:
+                return True
+        return False
+ 
+    def dijkstra():
+
+        start = (startRow, startColumn)
+        costs = {start: 0}
+        previous = {}
+        queue = [(0, start)]
+ 
+        while queue:
+            cost, (row, column) = heapq.heappop(queue)
+            if cost > costs[(row, column)]:
+                continue
+            for drow, dcol in DIRECTIONS:
+                nr, nc = row + drow, column + dcol
+                if not (0 <= nr < 20 and 0 <= nc < 20):
+                    continue
+                step = stepCost(nr, nc)
+                if step is None:
+                    continue
+                newCost = cost + step
+                if newCost < costs.get((nr, nc), float("inf")):
+                    costs[(nr, nc)] = newCost
+                    previous[(nr, nc)] = (row, column)
+                    heapq.heappush(queue, (newCost, (nr, nc)))
+        return costs, previous
+ 
+    def buildPath(target, previous):
+        path = []
+        current = target
+        start = (startRow, startColumn)
+        while current != start:
+            path.append(current)
+            current = previous[current]
+        path.reverse()
+        return path
+ 
+    def chooseTarget(costs):
+        if gemPos is not None and gemPos in costs:
+            return gemPos
+
+        best, bestScore = None, float("inf")
+        for (row, column), cost in costs.items():
+            if (row, column) == (startRow, startColumn) or not isFrontier(row, column):
+                continue
+            score = cost + max(0, 9 - row)
+            if score < bestScore:
+                best, bestScore = (row, column), score
+        return best
+ 
+    movesThisRun = 0
+ 
+    while movesThisRun < 200:
+        identifyFrontier()
+ 
+        if (startRow, startColumn) == (gemRow, gemColumn):
+            numObjectivesMet += 1
+            print("Objective met: True")
+            print(f"Number of moves: {numMoves}")
+            return
+ 
+        costs, previous = dijkstra()
+        target = chooseTarget(costs)
+ 
+        if target is None:
+            print("Objective met: False")
+            print("No reachable frontier left.")
+            print(f"Number of moves: {numMoves}")
+            return
+ 
+        startRow, startColumn = buildPath(target, previous)[0]
+        numMoves += 1
+        movesThisRun += 1
+ 
+    print("Objective met: False")
+    print("Maximum moves reached.")
+    print(f"Number of moves: {numMoves}")
+
 def basicBot():
     moving = True
     objectiveMet = False
@@ -210,7 +324,7 @@ def basicBot():
             objectiveMet = True
             numObjectivesMet += 1
             print(f"Objective met: {objectiveMet}")
-        if numMoves > 99:
+        if numMoves > 199:
             moving = False
             print(f"Number of moves: {numMoves}")
             print(f"Objective met: {objectiveMet}")
@@ -240,10 +354,11 @@ def visualGrid():
 
 
 possible = 0
+numTrials = 1000
 #run code 1000 times to see if 
-for i in range(1000):
+for i in range(numTrials):
     Obstacles(2, 2, 150)
-    basicBot()
+    frontierBot()
     if gemIsInterceptable():
         possible += 1
 
@@ -260,4 +375,5 @@ for i in range(1000):
             grid[row][column] = 0
     numMoves = 0
 
-print(f"Percent of environments where gem is interceptable: {possible/10}%")
+print(f"Percent of environments where gem is interceptable: {possible/numTrials*100}%")
+print(f"Percent of objectives met: {numObjectivesMet/numTrials*100}%")
